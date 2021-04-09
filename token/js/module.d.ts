@@ -12,6 +12,7 @@ declare module '@solana/spl-token' {
 
   // === client/token.js ===
   export const TOKEN_PROGRAM_ID: PublicKey;
+  export const ASSOCIATED_TOKEN_PROGRAM_ID: PublicKey;
 
   export class u64 extends BN {
     toBuffer(): Buffer;
@@ -35,6 +36,7 @@ declare module '@solana/spl-token' {
 
   export const AccountLayout: Layout;
   export type AccountInfo = {
+    address: PublicKey;
     mint: PublicKey;
     owner: PublicKey;
     amount: u64;
@@ -65,6 +67,7 @@ declare module '@solana/spl-token' {
   export class Token {
     publicKey: PublicKey;
     programId: PublicKey;
+    associatedProgramId: PublicKey;
     payer: Account;
     constructor(
       connection: Connection,
@@ -72,6 +75,21 @@ declare module '@solana/spl-token' {
       programId: PublicKey,
       payer: Account,
     );
+    static getMinBalanceRentForExemptMint(
+      connection: Connection,
+    ): Promise<number>;
+    static getMinBalanceRentForExemptAccount(
+      connection: Connection,
+    ): Promise<number>;
+    static getMinBalanceRentForExemptMultisig(
+      connection: Connection,
+    ): Promise<number>;
+    static getAssociatedTokenAddress(
+      associatedProgramId: PublicKey,
+      programId: PublicKey,
+      mint: PublicKey,
+      owner: PublicKey,
+    ): Promise<PublicKey>;
     static createMint(
       connection: Connection,
       payer: Account,
@@ -80,8 +98,8 @@ declare module '@solana/spl-token' {
       decimals: number,
       programId: PublicKey,
     ): Promise<Token>;
-    static getAccount(connection: Connection): Promise<Account>;
     createAccount(owner: PublicKey): Promise<PublicKey>;
+    createAssociatedTokenAccount(owner: PublicKey): Promise<PublicKey>;
     static createWrappedNativeAccount(
       connection: Connection,
       programId: PublicKey,
@@ -92,6 +110,7 @@ declare module '@solana/spl-token' {
     createMultisig(m: number, signers: Array<PublicKey>): Promise<PublicKey>;
     getMintInfo(): Promise<MintInfo>;
     getAccountInfo(account: PublicKey): Promise<AccountInfo>;
+    getOrCreateAssociatedAccountInfo(owner: PublicKey): Promise<AccountInfo>;
     getMultisigInfo(multisig: PublicKey): Promise<MultisigInfo>;
     transfer(
       source: PublicKey,
@@ -226,6 +245,14 @@ declare module '@solana/spl-token' {
       mint: PublicKey,
       authority: PublicKey,
       multiSigners: Array<Account>,
+    ): TransactionInstruction;
+    static createAssociatedTokenAccountInstruction(
+      associatedProgramId: PublicKey,
+      programId: PublicKey,
+      mint: PublicKey,
+      associatedAccount: PublicKey,
+      owner: PublicKey,
+      payer: PublicKey,
     ): TransactionInstruction;
   }
 }

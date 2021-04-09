@@ -4,6 +4,7 @@
 
 import assert from 'assert';
 import BN from 'bn.js';
+import {Buffer} from 'buffer';
 import * as BufferLayout from 'buffer-layout';
 import type {Connection, TransactionSignature} from '@solana/web3.js';
 import {
@@ -17,6 +18,10 @@ import {
 import * as Layout from './layout';
 import {sendAndConfirmTransaction} from './util/send-and-confirm-transaction';
 import {loadAccount} from './util/account';
+
+export const TOKEN_SWAP_PROGRAM_ID: PublicKey = new PublicKey(
+  'SwaPpA9LAaLfeLi3a68M4DjnLqgtticKg6CnyNwgAC8',
+);
 
 /**
  * Some amount of tokens
@@ -58,6 +63,7 @@ export class Numberu64 extends BN {
  */
 export const TokenSwapLayout: typeof BufferLayout.Structure = BufferLayout.struct(
   [
+    BufferLayout.u8('version'),
     BufferLayout.u8('isInitialized'),
     BufferLayout.u8('nonce'),
     Layout.publicKey('tokenProgramId'),

@@ -134,12 +134,12 @@ $ spl-token balance 7UX2i7SucgLMQcfZ75s3VXmZZY4YRUyJN9X1RgfMoDUi
 
 ```sh
 $ spl-token accounts
-Account                                      Token                                        Balance
--------------------------------------------------------------------------------------------------
-2ryb53FGVLVYFXmAemN7avawevuNFXwTVetMpH9ag3XZ 7e2X5oeAAJyUTi4PfSGXFLGhyPw2H8oELm1mx87ZCgwF 84
-7UX2i7SucgLMQcfZ75s3VXmZZY4YRUyJN9X1RgfMoDUi AQoKYV7tYpTrFZN6P5oUufbQKAUr9mNYGe1TTJC9wajM 100
-CqAxDdBRnawzx9q4PYM3wrybLHBhDZ4P6BTV13WsRJYJ AQoKYV7tYpTrFZN6P5oUufbQKAUr9mNYGe1TTJC9wajM 0
-JAopo117aj6HMwCRjXSyNpZfGDJRi7ukqHgs2inXD8Rc AQoKYV7tYpTrFZN6P5oUufbQKAUr9mNYGe1TTJC9wajM 0
+Token                                         Balance
+------------------------------------------------------------
+7e2X5oeAAJyUTi4PfSGXFLGhyPw2H8oELm1mx87ZCgwF  84
+AQoKYV7tYpTrFZN6P5oUufbQKAUr9mNYGe1TTJC9wajM  100
+AQoKYV7tYpTrFZN6P5oUufbQKAUr9mNYGe1TTJC9wajM  0    (Aux-1*)
+AQoKYV7tYpTrFZN6P5oUufbQKAUr9mNYGe1TTJC9wajM  1    (Aux-2*)
 ```
 
 ### Example: Wrapping SOL in a Token
@@ -204,11 +204,11 @@ Creating account CqAxDdBRnawzx9q4PYM3wrybLHBhDZ4P6BTV13WsRJYJ
 Signature: 4yPWj22mbyLu5mhfZ5WATNfYzTt5EQ7LGzryxM7Ufu7QCVjTE7czZdEBqdKR7vjKsfAqsBdjU58NJvXrTqCXvfWW
 ```
 ```
-$ spl-token accounts AQoKYV7tYpTrFZN6P5oUufbQKAUr9mNYGe1TTJC9wajM
-Account                                      Token                                        Balance
--------------------------------------------------------------------------------------------------
-7UX2i7SucgLMQcfZ75s3VXmZZY4YRUyJN9X1RgfMoDUi AQoKYV7tYpTrFZN6P5oUufbQKAUr9mNYGe1TTJC9wajM 100
-CqAxDdBRnawzx9q4PYM3wrybLHBhDZ4P6BTV13WsRJYJ AQoKYV7tYpTrFZN6P5oUufbQKAUr9mNYGe1TTJC9wajM 0
+$ spl-token accounts AQoKYV7tYpTrFZN6P5oUufbQKAUr9mNYGe1TTJC9wajM -v
+Account                                       Token                                         Balance
+--------------------------------------------------------------------------------------------------------
+7UX2i7SucgLMQcfZ75s3VXmZZY4YRUyJN9X1RgfMoDUi  AQoKYV7tYpTrFZN6P5oUufbQKAUr9mNYGe1TTJC9wajM  100
+CqAxDdBRnawzx9q4PYM3wrybLHBhDZ4P6BTV13WsRJYJ  AQoKYV7tYpTrFZN6P5oUufbQKAUr9mNYGe1TTJC9wajM  0    (Aux-1*)
 ```
 ```
 $ spl-token transfer 7UX2i7SucgLMQcfZ75s3VXmZZY4YRUyJN9X1RgfMoDUi 50 CqAxDdBRnawzx9q4PYM3wrybLHBhDZ4P6BTV13WsRJYJ
@@ -219,11 +219,11 @@ Transfer 50 tokens
 Signature: 5a3qbvoJQnTAxGPHCugibZTbSu7xuTgkxvF4EJupRjRXGgZZrnWFmKzfEzcqKF2ogCaF4QKVbAtuFx7xGwrDUcGd
 ```
 ```
-$ spl-token accounts AQoKYV7tYpTrFZN6P5oUufbQKAUr9mNYGe1TTJC9wajM
-Account                                      Token                                        Balance
--------------------------------------------------------------------------------------------------
-7UX2i7SucgLMQcfZ75s3VXmZZY4YRUyJN9X1RgfMoDUi AQoKYV7tYpTrFZN6P5oUufbQKAUr9mNYGe1TTJC9wajM 50
-CqAxDdBRnawzx9q4PYM3wrybLHBhDZ4P6BTV13WsRJYJ AQoKYV7tYpTrFZN6P5oUufbQKAUr9mNYGe1TTJC9wajM 50
+$ spl-token accounts AQoKYV7tYpTrFZN6P5oUufbQKAUr9mNYGe1TTJC9wajM -v
+Account                                       Token                                         Balance
+--------------------------------------------------------------------------------------------------------
+7UX2i7SucgLMQcfZ75s3VXmZZY4YRUyJN9X1RgfMoDUi  AQoKYV7tYpTrFZN6P5oUufbQKAUr9mNYGe1TTJC9wajM  50
+CqAxDdBRnawzx9q4PYM3wrybLHBhDZ4P6BTV13WsRJYJ  AQoKYV7tYpTrFZN6P5oUufbQKAUr9mNYGe1TTJC9wajM  50  (Aux-1*)
 ```
 
 ### Example: Create a non-fungible token
@@ -280,7 +280,7 @@ $ spl-token supply 559u4Tdr9umKwft3yHMsnAxohhzkFnUBPAFtibwuZD9z
 1
 ```
 
-### Mutlisig usage
+### Multisig usage
 
 The main difference in `spl-token` command line usage when referencing multisig
 accounts is in specifying the `--owner` argument. Typically the signer specified
@@ -337,7 +337,7 @@ Creating 2/3 multisig 46ed77fd4WTN144q62BwjU2B3ogX3Xmmc8PT5Z3Xc2re
 Signature: 2FN4KXnczAz33SAxwsuevqrD1BvikP6LUhLie5Lz4ETt594X8R7yvMZzZW2zjmFLPsLQNHsRuhQeumExHbnUGC9A
 ```
 
-Next create the token mint and recieving accounts
+Next create the token mint and receiving accounts
 [as previously described](#example-creating-your-own-fungible-token)
 ```
 $ spl-token create-token
@@ -657,10 +657,6 @@ to an account with unknown private key or destroying a private key. But the act
 of burning by using `Burn` instructions is more explicit and can be confirmed on
 chain by any parties.
 
-Note: there is a method by which a malicious and determined account owner
-can silently burn their tokens without updating supply on chain by making an
-account that is removed by rent collection because of [this known issue](#rent-exemption-loophole).
-
 ### Authority delegation
 
 Account owners may delegate authority over some or all of their token balance
@@ -717,18 +713,9 @@ The Native Mint supply will always report 0, regardless of how much SOL is curre
 ### Rent-exemption
 
 To ensure a reliable calculation of supply, a consistency valid Mint, and
-consistently valid Multisig accounts all Solana accounts holding a Account,
+consistently valid Multisig accounts all Solana accounts holding an Account,
 Mint, or Multisig must contain enough SOL to be considered [rent
 exempt](https://docs.solana.com/implemented-proposals/rent)
-
-#### Rent-exemption loophole
-
-However note that there is currently a loophole to escape from the rent-exemption
-rule. It is possible to create SPL Token accounts that are not rent exempt by
-spoofing the Rent sysvar, since
-[there are insufficient sysvar checks](https://github.com/solana-labs/solana/pull/13175)
-in the program. This could be abused to burn tokens by transferring tokens to
-a non-exempt Account that is subsequently rent-collected out of existence.
 
 ### Closing accounts
 
@@ -779,8 +766,17 @@ party through an airdrop campaign.
 
 The creation process is described [here](associated-token-account.md#creating-an-associated-token-account).
 
+It's highly recommended that the wallet create the associated token account for
+a given SPL Token itself before indicating to the user that they are able to
+receive that SPL Tokens type (typically done by showing the user their receiving
+address). A wallet that chooses to not perform this step may limit its user's ability
+to receive SPL Tokens from other wallets.
+
 #### Sample "Add Token" workflow
-The user should first fund their associated token when they want to receive tokens of a certain type.
+The user should first fund their associated token account when they want to
+receive SPL Tokens of a certain type to:
+1. Maximize interoperability with other wallet implementations
+2. Avoid pushing the cost of creating their associated token account on the first sender
 
 The wallet should provide a UI that allow the users to "add a token".
 The user selects the kind of token, and is presented with information about how
@@ -812,9 +808,21 @@ associated token account of the recipient.
 The recipient must provide their main wallet address to the sender.  The sender
 then:
 1. Derives the associated token account for the recipient
-1. Fetches the recipient's associated token account over RPC and checks that it exists.
-1. If the recipient's associated token account does not exist, the sender wallet may choose to first fund the recipient's wallet at their expense
-1. Use `TokenInstruction::Transfer` to complete the transfer.
+1. Fetches the recipient's associated token account over RPC and checks that it exists
+1. If the recipient's associated token account does not yet exist, the sender
+   wallet should create the recipient's associated token account as described
+   [here](associated-token-account.md#creating-an-associated-token-account).
+   The sender's wallet may choose to inform the user that as a result of account
+   creation the transfer will require more SOL than normal.
+   However a wallet that chooses to not support creating the recipient's
+   associated token account at this time should present a message to the user with enough
+   information to permit them to find a workaround (such as transferring the
+   token through a fully compliant intermediary wallet such as https://sollet.io)
+   to allow the users to accomplish their goal
+1. Use `TokenInstruction::Transfer` to complete the transfer
+
+The sender's wallet must not require that the recipient's main wallet address
+hold a balance before allowing the transfer.
 
 ### Registry for token details
 At the moment Token Mint addresses need to be hard coded by each wallet.  **Improving this situation is a work in progress.**

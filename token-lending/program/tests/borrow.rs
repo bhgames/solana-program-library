@@ -6,9 +6,8 @@ use helpers::*;
 use solana_program_test::*;
 use solana_sdk::{pubkey::Pubkey, signature::Keypair};
 use spl_token_lending::{
-    instruction::BorrowAmountType,
-    processor::process_instruction,
-    state::{INITIAL_COLLATERAL_RATE, SLOTS_PER_YEAR},
+    instruction::BorrowAmountType, math::Decimal, processor::process_instruction,
+    state::INITIAL_COLLATERAL_RATIO,
 };
 
 const LAMPORTS_TO_SOL: u64 = 1_000_000_000;
@@ -17,15 +16,15 @@ const FRACTIONAL_TO_USDC: u64 = 1_000_000;
 #[tokio::test]
 async fn test_borrow_quote_currency() {
     // Using SOL/USDC max 3 bids:
-    //  $2.199,  300.0 SOL
-    //  $2.192,  213.3 SOL
-    //  $2.190, 1523.4 SOL
+    //  $13.988,  300.0 SOL
+    //  $13.960,  206.8 SOL
+    //  $13.928, 1000.0 SOL
     //
     // Collateral amount = 750 * 0.8 (LTV) = 600 SOL
-    // Borrow amount = 2.199 * 300 + 2.192 * 213.3 + 2.19 * 86.7 = 1,317.1266 USDC
+    // Borrow amount = 13.988 * 300 + 13.960 * 206.8 + 13.928 * 93.2 = 8,381.4176 USDC
     const SOL_COLLATERAL_AMOUNT_LAMPORTS: u64 = 750 * LAMPORTS_TO_SOL;
-    const USDC_BORROW_AMOUNT_FRACTIONAL: u64 = 1_317_126_600;
-    const INITIAL_USDC_RESERVE_SUPPLY_FRACTIONAL: u64 = 10_000 * FRACTIONAL_TO_USDC;
+    const USDC_BORROW_AMOUNT_FRACTIONAL: u64 = 8_381_417_600;
+    const INITIAL_USDC_RESERVE_SUPPLY_FRACTIONAL: u64 = 20_000 * FRACTIONAL_TO_USDC;
     const INITIAL_SOL_RESERVE_SUPPLY_LAMPORTS: u64 = 2 * SOL_COLLATERAL_AMOUNT_LAMPORTS;
 
     let mut test = ProgramTest::new(
@@ -35,7 +34,7 @@ async fn test_borrow_quote_currency() {
     );
 
     // limit to track compute unit increase
-    test.set_bpf_compute_max_units(190_000);
+    test.set_bpf_compute_max_units(230_000);
 
     let user_accounts_owner = Keypair::new();
     let sol_usdc_dex_market = TestDexMarket::setup(&mut test, TestDexMarketPair::SOL_USDC);
@@ -50,7 +49,6 @@ async fn test_borrow_quote_currency() {
         &user_accounts_owner,
         &lending_market,
         AddReserveArgs {
-            slots_elapsed: SLOTS_PER_YEAR,
             liquidity_amount: INITIAL_USDC_RESERVE_SUPPLY_FRACTIONAL,
             liquidity_mint_pubkey: usdc_mint.pubkey,
             liquidity_mint_decimals: usdc_mint.decimals,
@@ -64,13 +62,24 @@ async fn test_borrow_quote_currency() {
         &user_accounts_owner,
         &lending_market,
         AddReserveArgs {
-            slots_elapsed: SLOTS_PER_YEAR,
             dex_market_pubkey: Some(sol_usdc_dex_market.pubkey),
             liquidity_amount: INITIAL_SOL_RESERVE_SUPPLY_LAMPORTS,
             liquidity_mint_pubkey: spl_token::native_mint::id(),
             liquidity_mint_decimals: 9,
             config: reserve_config,
             ..AddReserveArgs::default()
+        },
+    );
+
+    let usdc_obligation = add_obligation(
+        &mut test,
+        &user_accounts_owner,
+        &lending_market,
+        AddObligationArgs {
+            borrow_reserve: &usdc_reserve,
+            collateral_reserve: &sol_reserve,
+            collateral_amount: 0,
+            borrowed_liquidity_wads: Decimal::zero(),
         },
     );
 
@@ -84,8 +93,8 @@ async fn test_borrow_quote_currency() {
         get_token_balance(&mut banks_client, sol_reserve.collateral_supply).await;
     assert_eq!(collateral_supply, 0);
 
-    let collateral_deposit_amount = INITIAL_COLLATERAL_RATE * SOL_COLLATERAL_AMOUNT_LAMPORTS;
-    let obligation = lending_market
+    let collateral_deposit_amount = INITIAL_COLLATERAL_RATIO * SOL_COLLATERAL_AMOUNT_LAMPORTS;
+    lending_market
         .borrow(
             &mut banks_client,
             &payer,
@@ -96,7 +105,7 @@ async fn test_borrow_quote_currency() {
                 borrow_amount_type: BorrowAmountType::CollateralDepositAmount,
                 amount: collateral_deposit_amount,
                 user_accounts_owner: &user_accounts_owner,
-                obligation: None,
+                obligation: &usdc_obligation,
             },
         )
         .await;
@@ -124,9 +133,9 @@ async fn test_borrow_quote_currency() {
                 borrow_reserve: &usdc_reserve,
                 dex_market: &sol_usdc_dex_market,
                 borrow_amount_type: BorrowAmountType::LiquidityBorrowAmount,
-                amount: USDC_BORROW_AMOUNT_FRACTIONAL,
+                amount: borrow_amount,
                 user_accounts_owner: &user_accounts_owner,
-                obligation: Some(obligation),
+                obligation: &usdc_obligation,
             },
         )
         .await;
@@ -135,9 +144,14 @@ async fn test_borrow_quote_currency() {
         get_token_balance(&mut banks_client, usdc_reserve.user_liquidity_account).await;
     assert_eq!(borrow_amount, 2 * USDC_BORROW_AMOUNT_FRACTIONAL);
 
+    let user_collateral_balance =
+        get_token_balance(&mut banks_client, sol_reserve.user_collateral_account).await;
+    assert_eq!(user_collateral_balance, 0);
+
+    let collateral_deposited = 2 * collateral_deposit_amount;
     let (total_fee, host_fee) = TEST_RESERVE_CONFIG
         .fees
-        .calculate_borrow_fees(2 * collateral_deposit_amount)
+        .calculate_borrow_fees(collateral_deposited)
         .unwrap();
 
     assert!(total_fee > 0);
@@ -145,7 +159,7 @@ async fn test_borrow_quote_currency() {
 
     let collateral_supply =
         get_token_balance(&mut banks_client, sol_reserve.collateral_supply).await;
-    assert_eq!(collateral_supply, 2 * collateral_deposit_amount - total_fee);
+    assert_eq!(collateral_supply, collateral_deposited - total_fee);
 
     let fee_balance =
         get_token_balance(&mut banks_client, sol_reserve.collateral_fees_receiver).await;
@@ -157,15 +171,15 @@ async fn test_borrow_quote_currency() {
 
 #[tokio::test]
 async fn test_borrow_base_currency() {
-    // Using SOL/USDC min 3 asks:
-    //  $2.212, 1825.6 SOL
-    //  $2.211,  300.0 SOL
-    //  $2.210,  212.5 SOL
+    // Using SOL/USDC min 2 asks:
+    //  $14.074, 4707.1 SOL
+    //  $14.055, 1751.7 SOL
+    //  $13.989,   12.1 SOL
     //
-    // Borrow amount = 600 SOL
-    // Collateral amount = 2.21 * 212.5 + 2.211 * 300 + 2.212 * 87.5 = 1,329.475 USDC
-    const SOL_BORROW_AMOUNT_LAMPORTS: u64 = 600 * LAMPORTS_TO_SOL;
-    const USDC_COLLATERAL_LAMPORTS: u64 = 1_326_475_000;
+    // Borrow amount = 2000 SOL
+    // Collateral amount = 13.989 * 12.1 + 14.055 * 1751.7 + 14.074 * 236.2 = 28,113.6892 USDC
+    const SOL_BORROW_AMOUNT_LAMPORTS: u64 = 2000 * LAMPORTS_TO_SOL;
+    const USDC_COLLATERAL_LAMPORTS: u64 = 28_113_689_200;
     const INITIAL_SOL_RESERVE_SUPPLY_LAMPORTS: u64 = 5000 * LAMPORTS_TO_SOL;
     const INITIAL_USDC_RESERVE_SUPPLY_FRACTIONAL: u64 = 2 * USDC_COLLATERAL_LAMPORTS;
 
@@ -176,7 +190,7 @@ async fn test_borrow_base_currency() {
     );
 
     // limit to track compute unit increase
-    test.set_bpf_compute_max_units(190_000);
+    test.set_bpf_compute_max_units(230_000);
 
     let user_accounts_owner = Keypair::new();
     let sol_usdc_dex_market = TestDexMarket::setup(&mut test, TestDexMarketPair::SOL_USDC);
@@ -191,7 +205,6 @@ async fn test_borrow_base_currency() {
         &user_accounts_owner,
         &lending_market,
         AddReserveArgs {
-            slots_elapsed: SLOTS_PER_YEAR,
             liquidity_amount: INITIAL_USDC_RESERVE_SUPPLY_FRACTIONAL,
             liquidity_mint_pubkey: usdc_mint.pubkey,
             liquidity_mint_decimals: usdc_mint.decimals,
@@ -205,13 +218,24 @@ async fn test_borrow_base_currency() {
         &user_accounts_owner,
         &lending_market,
         AddReserveArgs {
-            slots_elapsed: SLOTS_PER_YEAR,
             dex_market_pubkey: Some(sol_usdc_dex_market.pubkey),
             liquidity_amount: INITIAL_SOL_RESERVE_SUPPLY_LAMPORTS,
             liquidity_mint_pubkey: spl_token::native_mint::id(),
             liquidity_mint_decimals: 9,
             config: reserve_config,
             ..AddReserveArgs::default()
+        },
+    );
+
+    let sol_obligation = add_obligation(
+        &mut test,
+        &user_accounts_owner,
+        &lending_market,
+        AddObligationArgs {
+            borrow_reserve: &sol_reserve,
+            collateral_reserve: &usdc_reserve,
+            collateral_amount: 0,
+            borrowed_liquidity_wads: Decimal::zero(),
         },
     );
 
@@ -225,8 +249,8 @@ async fn test_borrow_base_currency() {
         get_token_balance(&mut banks_client, usdc_reserve.collateral_supply).await;
     assert_eq!(collateral_supply, 0);
 
-    let collateral_deposit_amount = INITIAL_COLLATERAL_RATE * USDC_COLLATERAL_LAMPORTS;
-    let obligation = lending_market
+    let collateral_deposit_amount = INITIAL_COLLATERAL_RATIO * USDC_COLLATERAL_LAMPORTS;
+    lending_market
         .borrow(
             &mut banks_client,
             &payer,
@@ -237,7 +261,7 @@ async fn test_borrow_base_currency() {
                 borrow_amount_type: BorrowAmountType::CollateralDepositAmount,
                 amount: collateral_deposit_amount,
                 user_accounts_owner: &user_accounts_owner,
-                obligation: None,
+                obligation: &sol_obligation,
             },
         )
         .await;
@@ -267,7 +291,7 @@ async fn test_borrow_base_currency() {
                 borrow_amount_type: BorrowAmountType::LiquidityBorrowAmount,
                 amount: borrow_amount,
                 user_accounts_owner: &user_accounts_owner,
-                obligation: Some(obligation),
+                obligation: &sol_obligation,
             },
         )
         .await;
