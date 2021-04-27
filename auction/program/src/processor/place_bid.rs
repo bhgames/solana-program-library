@@ -20,6 +20,8 @@ use crate::{
     PREFIX,
 };
 
+use super::{AuctionState, BIDDER_METADATA_LEN};
+
 use {
     borsh::{BorshDeserialize, BorshSerialize},
     solana_program::{
@@ -90,7 +92,7 @@ pub fn place_bid(
     )?;
 
     // Load the auction and verify this bid is valid.
-    let mut auction: AuctionData = try_from_slice_unchecked(&auction_act.data.borrow())?;
+    let mut auction: AuctionData = try_from_slice_unchecked(&auction_act.data.borrow_mut())?;
 
     // If the auction mint does not match the passed mint, bail.
     if auction.token_mint != *mint_account.key {
@@ -105,9 +107,9 @@ pub fn place_bid(
     if let Some(gap) = auction.end_auction_gap {
         if let Some(last_bid) = auction.last_bid {
             if clock.slot - last_bid > gap {
-                msg!("Auction finished, gp time passed.");
-
-                return Err(AuctionError::InvalidState.into());
+                auction.state = AuctionState::end(auction.state)?;
+                auction.serialize(&mut *auction_act.data.borrow_mut())?;
+                return Ok(());
             }
         }
     }
@@ -116,7 +118,9 @@ pub fn place_bid(
     if let Some(end) = auction.ended_at {
         msg!("Auction finished, passed end time.");
         if clock.slot > end {
-            return Err(AuctionError::InvalidState.into());
+            auction.state = AuctionState::end(auction.state)?;
+            auction.serialize(&mut *auction_act.data.borrow_mut())?;
+            return Ok(());
         }
     }
 
