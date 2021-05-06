@@ -170,7 +170,7 @@ pub fn release_escrow(program_id: &Pubkey, accounts: &[AccountInfo], amount: u64
     spl_token_transfer(TokenTransferParams {
         source: source.clone(),
         destination: destination.clone(),
-        amount: 0,
+        amount,
         authority: authority.clone(),
         authority_signer_seeds: authority_signer_seeds,
         token_program: token_program.clone(),
