@@ -33,12 +33,13 @@ solana_program::declare_id!("BPFLoaderUpgradeab1e11111111111111111111111");
 
 use std::{error, str::FromStr, time::Instant};
 // -------- UPDATE START -------
-const CLUSTER_ADDRESS: &str = "http://127.0.0.1:8899";
+const CLUSTER_ADDRESS: &str = "https://devnet.solana.com";
 const GOVERNANCE_PROGRAM_ID: &str = "2uWrXQ3tMurqTLe3Dmue6DzasUGV9UPqK7AK7HzS7v3D";
-const PAYER_KEY_PATH: &str = "/Users/SebastianBor/.config/solana/wallet.json";
+const PAYER_KEY_PATH: &str = "/Users/jprince/.config/solana/id.json";
 
-const BUFFER_KEY_PATH: &str = "/Users/SebastianBor/.config/solana/bpf_place.json";
-const GOVERNED_PROGRAM_PATH: &str =    "/Users/SebastianBor/gitHub/solana-program-library-bhgames/target/deploy/spl_hello_world_escrow.so";
+const BUFFER_KEY_PATH: &str = "/Users/jprince/.config/solana/bpf_place.json";
+const GOVERNED_PROGRAM_PATH: &str =
+    "/Users/jprince/Documents/other/solana-program-library/target/deploy/spl_hello_world_escrow.so";
 const GOVERNED_PROGRAM_ID: &str = "9XijmPdNLBsZRmddZWJ2ua3U2Ch29b4iCj9S3aSASC5A";
 
 // -------- UPDATE END ---------

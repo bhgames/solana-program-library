@@ -8,6 +8,7 @@ use solana_program::{
     msg,
     program::invoke_signed,
     program_error::{PrintProgramError, ProgramError},
+    program_pack::{IsInitialized, Pack},
     pubkey::Pubkey,
 };
 
@@ -107,11 +108,11 @@ impl HelloWorldInstruction {
             .ok_or(HelloWorldError::InstructionUnpackError)?;
         Ok(match tag {
             0 => {
-                let (amount, _) = Self::unpack_u64(rest)?;
+                let (amount, rest) = Self::unpack_u64(rest)?;
                 Self::ReleaseEscrow { amount }
             }
             1 => {
-                let (amount, _) = Self::unpack_u64(rest)?;
+                let (amount, rest) = Self::unpack_u64(rest)?;
                 Self::SeedEscrow { amount }
             }
             _ => return Err(HelloWorldError::InstructionUnpackError.into()),
@@ -152,11 +153,7 @@ impl HelloWorldInstruction {
 }
 
 ///Release escrow
-pub fn release_escrow(
-    program_id: &Pubkey,
-    accounts: &[AccountInfo],
-    _amount: u64,
-) -> ProgramResult {
+pub fn release_escrow(program_id: &Pubkey, accounts: &[AccountInfo], amount: u64) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
     let source = next_account_info(account_info_iter)?;
     let destination = next_account_info(account_info_iter)?;
@@ -182,7 +179,7 @@ pub fn release_escrow(
 }
 
 /// Seed escrow
-pub fn seed_escrow(_program_id: &Pubkey, accounts: &[AccountInfo], amount: u64) -> ProgramResult {
+pub fn seed_escrow(program_id: &Pubkey, accounts: &[AccountInfo], amount: u64) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
     let transfer_authority = next_account_info(account_info_iter)?;
     let source = next_account_info(account_info_iter)?;
